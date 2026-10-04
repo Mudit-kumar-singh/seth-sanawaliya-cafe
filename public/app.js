@@ -19,7 +19,6 @@ function render() {
   document.getElementById("app").innerHTML = `
 <header class="nav">
   <div class="brand">
-    <img src="/logo.jpeg" alt="Seth Sanwaliya" class="brand-logo">
     <div>
       <div>Seth Sanwaliya</div>
       <span>RESTAURANT</span>
