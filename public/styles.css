@@ -8,30 +8,8 @@
 button,input,select{font:inherit} button{cursor:pointer}
 a{color:inherit;text-decoration:none}
 .nav{height:72px;padding:0 5%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:rgba(9,9,9,.9);backdrop-filter:blur(10px);position:sticky;top:0;z-index:20}
-.brand{
-  font-family:"Playfair Display";
-  font-size:24px;
-  color:var(--gold2);
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.brand span{
-  display:block;
-  font-family:"DM Sans";
-  font-size:9px;
-  letter-spacing:3px;
-  color:#d9d0c1;
-  text-align:center;
-}
-
-.brand-logo{
-  width:48px;
-  height:48px;
-  object-fit:contain;
-  border-radius:50%;
-}
+.brand{font-family:"Playfair Display";font-size:24px;color:var(--gold2)} .brand span{display:block;font-family:"DM Sans";font-size:9px;letter-spacing:3px;color:#d9d0c1;text-align:center}
+.container{max-width:1200px;margin:auto;padding:24px 18px 90px}
 .hero{padding:34px 0 22px;display:flex;gap:24px;align-items:flex-end;justify-content:space-between}
 .hero h1{font-family:"Playfair Display";font-size:clamp(34px,7vw,62px);line-height:.95;margin:0 0 12px}
 .hero p{color:var(--muted);max-width:650px;margin:0}.gold{color:var(--gold2)}
@@ -74,20 +52,3 @@ a{color:inherit;text-decoration:none}
 
 /* Phase 6.2 - staff order workflow */
 .nav-count{display:inline-flex;min-width:20px;height:20px;padding:0 6px;align-items:center;justify-content:center;border-radius:999px;background:var(--gold);color:#111;font-size:11px;font-weight:800;margin-left:5px}.status-timeline{margin-top:10px;min-width:190px}.timeline-row{display:flex;gap:9px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #292929}.timeline-row:last-child{border-bottom:0}.timeline-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);margin-top:6px;flex:0 0 auto}.timeline-row small{display:block;color:#888;margin-top:2px}.order-actions{display:flex;flex-direction:column;gap:6px;min-width:135px}.go-action{background:var(--gold)!important;color:#111!important;border-color:var(--gold)!important}.danger-action{border-color:#7a3d3d!important;color:#ffb4b4!important}@media(max-width:800px){.order-actions{min-width:110px}.data{font-size:12px}}
-
-@media(max-width:600px){
-  .brand{
-    font-size:18px;
-    gap:7px;
-  }
-
-  .brand-logo{
-    width:38px;
-    height:38px;
-  }
-
-  .brand span{
-    font-size:7px;
-    letter-spacing:2px;
-  }
-}
