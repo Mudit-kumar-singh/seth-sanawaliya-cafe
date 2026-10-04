@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Track Order — Seth Sanwaliya</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body{background:#0f0f0f;color:#f6f0e7}.track{max-width:760px;margin:0 auto;padding:28px 18px 60px}
+    .track-card{background:#181818;border:1px solid #39322a;border-radius:22px;padding:24px;margin-top:18px}
+    .status{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:24px 0}
+    .step{padding:14px 8px;text-align:center;border:1px solid #3b342a;border-radius:12px;font-size:12px;color:#9f988d}
+    .step.on{border-color:#d9a441;color:#f4c768;background:#211b10}.step.done{color:#d9e8c0}
+    .big{font-size:30px;font-weight:800}.muted2{color:#aaa}.items{display:grid;gap:8px}.item{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #2b2925}
+    @media(max-width:600px){.status{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+<div class="track">
+  <div class="brand">Seth Sanwaliya<span>ORDER TRACKING</span></div>
+  <div id="app" class="track-card">Loading order…</div>
+</div>
+<script>
+const id=new URLSearchParams(location.search).get("id");
+const steps=["new","preparing","ready","completed"];
+const labels={new:"Order received",preparing:"Preparing",ready:"Ready",completed:"Completed"};
+const money=n=>"₹"+Number(n).toLocaleString("en-IN");
+async function load(){
+  const box=document.querySelector("#app");
+  if(!/^SS\\d{8}$/.test(id||"")){box.innerHTML="<h2>Invalid order link</h2><p class='muted2'>Please use the tracking link from your order confirmation.</p>";return}
+  try{
+    const r=await fetch("/api/orders/"+id); const o=await r.json(); if(!r.ok)throw new Error(o.error);
+    const current=steps.indexOf(o.status);
+    box.innerHTML=`<div class="muted2">Order ID</div><div class="big">#${o.id}</div>
+      <p>Table ${o.table} · ${o.payment.toUpperCase()} · ${o.paymentStatus}</p>
+      <div class="status">${steps.map((s,i)=>`<div class="step ${i<=current?'on':''} ${i<current?'done':''}">${labels[s]}</div>`).join("")}</div>
+      <div class="items">${o.items.map(i=>`<div class="item"><span>${i.qty}× ${i.name}</span><b>${money(i.price*i.qty)}</b></div>`).join("")}</div>
+      <h2 style="text-align:right">Total ${money(o.total)}</h2>
+      <p class="muted2">This page refreshes automatically.</p>`;
+  }catch(e){box.innerHTML="<h2>Order not found</h2><p class='muted2'>Check the order ID and try again.</p>"}
+}
+load();setInterval(load,5000);
+</script>
+</body></html>
