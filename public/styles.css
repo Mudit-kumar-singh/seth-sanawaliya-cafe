@@ -66,3 +66,150 @@ a{color:inherit;text-decoration:none}
   object-fit: contain;
   border-radius: 50%;
 }
+
+/* =========================
+   MOBILE RESPONSIVE DESIGN
+   ========================= */
+
+@media (max-width: 600px) {
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .nav {
+    height: 64px;
+    padding: 0 14px;
+  }
+
+  .brand {
+    font-size: 18px;
+    gap: 7px;
+  }
+
+  .brand-logo {
+    width: 38px;
+    height: 38px;
+  }
+
+  .brand span {
+    font-size: 7px;
+    letter-spacing: 2px;
+  }
+
+  .table-pill {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .container {
+    width: 100%;
+    padding: 16px 12px 100px;
+  }
+
+  .hero {
+    padding: 24px 0 18px;
+    gap: 18px;
+  }
+
+  .hero h1 {
+    font-size: 42px;
+    line-height: .95;
+  }
+
+  .hero p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .hero .table-pill {
+    width: 100%;
+    text-align: center;
+  }
+
+  .notice {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  /* Category buttons */
+  .tabs {
+    top: 64px;
+    gap: 7px;
+    padding: 5px 0 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tabs button {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  /* ONE FOOD CARD PER ROW */
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+
+  .section-title {
+    font-size: 25px;
+    margin: 22px 0 12px;
+  }
+
+  .card {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .item-name {
+    font-size: 15px;
+  }
+
+  .price {
+    font-size: 15px;
+  }
+
+  .card p {
+    font-size: 12px;
+    min-height: auto;
+    margin: 7px 0 11px;
+  }
+
+  .add {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  /* Cart button */
+  .cart {
+    right: 12px;
+    left: 12px;
+    bottom: 12px;
+    width: auto;
+    padding: 13px 16px;
+    text-align: center;
+  }
+
+  /* Cart / checkout drawer */
+  .sheet {
+    width: 100%;
+    max-height: 90vh;
+    padding: 18px 14px;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .sheet .row {
+    gap: 8px;
+  }
+
+  .pay-grid {
+    grid-template-columns: 1fr;
+  }
+}
