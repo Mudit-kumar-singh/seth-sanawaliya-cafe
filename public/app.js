@@ -38,16 +38,51 @@ function openCart() { if (!items().length) { alert("Your cart is empty."); retur
 function qty(id, n) { state.cart[id] = (state.cart[id] || 0) + n; if (state.cart[id] <= 0) delete state.cart[id]; updateButton(); if (items().length) openCart(); else closeDrawer() }
 function customerForm() { const d = $("#drawer"); d.classList.add("open"); d.innerHTML = `<div class="sheet"><div class="row"><h2>Before we send it</h2><button class="action" onclick="closeDrawer()">Close</button></div><label class="label">Your name</label><input id="cust-name" class="input" placeholder="e.g. Rahul Sharma"><label class="label">Phone number</label><input id="cust-phone" class="input" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number"><div class="notice">Table <b>${state.table || "—"}</b> · Details are stored with your order.</div><button class="primary" onclick="paymentForm()">Continue to payment</button></div>` }
 function paymentForm() {
-  const name = $("#cust-name").value.trim(), phone = $("#cust-phone").value.trim();
-  if (!name || !/^\d{10}$/.test(phone)) { alert("Please enter a valid name and 10-digit phone number."); return }
+  const name = $("#cust-name").value.trim();
+  const phone = $("#cust-phone").value.trim();
+
+  if (!name || !/^\d{10}$/.test(phone)) {
+    alert("Please enter a valid name and 10-digit phone number.");
+    return;
+  }
+
   state.customer = { name, phone };
-  const d = $("#drawer"); d.innerHTML = `<div class="sheet"><div class="row"><h2>Choose payment</h2><button class="action" onclick="closeDrawer()">Close</button></div>
- <div class="pay-grid"><div id="pay-counter" class="pay-option selected" onclick="selectPay('counter')"><b>💵 Pay at Counter</b><div class="muted">Place order now, pay at the counter.</div></div>
- <div id="pay-upi" class="pay-option" onclick="selectPay('upi')"><b>📲 Pay online by UPI</b><div class="muted">Secure Razorpay checkout. UPI, cards and other enabled methods may appear.</div></div></div>
- <div id="upi-area" class="hidden" style="text-align:center;margin-top:18px"><div class="notice">Online payment uses Razorpay. Your order is sent to the kitchen only after the payment is verified.</div></div>
- <div class="total">Payable: ${money(total())}</div><button id="payment-submit" class="primary" onclick="placeOrder()">Place order</button>
- <p id="payment-note" class="muted" style="font-size:11px;margin-top:12px">Counter orders go directly to the kitchen.</p></div>`;
-  updatePaymentUI();
+  state.payment = "counter";
+
+  const d = $("#drawer");
+
+  d.innerHTML = `
+    <div class="sheet">
+      <div class="row">
+        <h2>Place your order</h2>
+        <button class="action" onclick="closeDrawer()">Close</button>
+      </div>
+
+      <div class="notice">
+        Table <b>${state.table || "—"}</b>
+      </div>
+
+      <div class="pay-option selected">
+        <b>💵 Pay at Counter</b>
+        <div class="muted">
+          Place your order now and pay at the counter.
+        </div>
+      </div>
+
+      <div class="total">
+        Payable: ${money(total())}
+      </div>
+
+      <button class="primary" onclick="placeOrder()">
+        Place order
+      </button>
+
+      <p class="muted" style="font-size:11px;margin-top:12px">
+        Your order will be sent directly to the kitchen.
+        Please pay at the counter.
+      </p>
+    </div>
+  `;
 }
 async function selectPay(p) {
   state.payment = p;
