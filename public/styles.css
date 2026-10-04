@@ -822,3 +822,18 @@ a {
     grid-template-columns: 1fr;
   }
 }
+/* FINAL MOBILE CART POSITION FIX */
+@media (max-width: 600px) {
+  button.cart {
+    position: fixed !important;
+    right: 12px !important;
+    bottom: 12px !important;
+    left: auto !important;
+    top: auto !important;
+    width: auto !important;
+    height: auto !important;
+    z-index: 9999 !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+}
