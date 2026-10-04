@@ -430,11 +430,11 @@ app.get("/api/kitchen/orders", authUser, (req, res) => {
   res.json(rows.map(publicOrder));
 });
 
-app.get("/api/orders/:id", (req, res) => {
-  const row = db.prepare("SELECT * FROM orders WHERE public_id=?").get(req.params.id);
-  if (!row) return res.status(404).json({ error: "Order not found." });
-  res.json(publicOrder(row));
-});
+// app.get("/api/orders/:id", (req, res) => {
+//   const row = db.prepare("SELECT * FROM orders WHERE public_id=?").get(req.params.id);
+//   if (!row) return res.status(404).json({ error: "Order not found." });
+//   res.json(publicOrder(row));
+// });
 
 app.get("/api/analytics", ownerOnly, (req, res) => {
   const days = Math.min(90, Math.max(1, Number(req.query.days || 7)));
