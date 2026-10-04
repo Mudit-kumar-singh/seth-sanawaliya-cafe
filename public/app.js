@@ -36,52 +36,8 @@ function total() { return items().reduce((s, x) => s + x.item.price * x.qty, 0) 
 function updateButton() { if (!$("#cart-count")) return; $("#cart-count").textContent = Object.values(state.cart).reduce((a, b) => a + b, 0); $("#cart-total").textContent = money(total()) }
 function openCart() { if (!items().length) { alert("Your cart is empty."); return } const d = $("#drawer"); d.classList.add("open"); d.innerHTML = `<div class="sheet"><div class="row"><h2>🛒 Your Order</h2><button class="action" onclick="closeDrawer()">Close</button></div>${items().map(x => `<div class="row"><div><b>${x.item.name}</b><div class="muted">${money(x.item.price)} each</div></div><div class="qty"><button onclick="qty('${x.item.id}',-1)">−</button><b>${x.qty}</b><button onclick="qty('${x.item.id}',1)">+</button></div><b>${money(x.item.price * x.qty)}</b></div>`).join("")}<div class="total">Total: ${money(total())}</div><button class="primary" onclick="customerForm()">Continue</button></div>` }
 function qty(id, n) { state.cart[id] = (state.cart[id] || 0) + n; if (state.cart[id] <= 0) delete state.cart[id]; updateButton(); if (items().length) openCart(); else closeDrawer() }
-function customerForm() {
-  const d = $("#drawer");
-  d.classList.add("open");
-
-  d.innerHTML = `
-    <div class="sheet">
-      <div class="row">
-        <h2>Before we send it</h2>
-        <button class="action" onclick="closeDrawer()">Close</button>
-      </div>
-
-      <label class="label">Your name</label>
-      <input id="cust-name" class="input"
-             placeholder="e.g. Rahul Sharma">
-
-      <label class="label">Phone number</label>
-      <input id="cust-phone" class="input"
-             inputmode="numeric"
-             maxlength="10"
-             placeholder="10-digit mobile number">
-
-      <div class="notice">
-        Table <b>${state.table || "—"}</b> ·
-        Please pay at the counter after placing your order.
-      </div>
-
-      <button class="primary" onclick="placeOrderFromCustomer()">
-        Place order
-      </button>
-    </div>
-  `;
-}
-function placeOrderFromCustomer() {
-  const name = $("#cust-name").value.trim();
-  const phone = $("#cust-phone").value.trim();
-
-  if (!name || !/^\d{10}$/.test(phone)) {
-    alert("Please enter a valid name and 10-digit phone number.");
-    return;
-  }
-
-  state.customer = { name, phone };
-  state.payment = "counter";
-
-  placeOrder();
-}
+function customerForm() { const d = $("#drawer"); d.classList.add("open"); d.innerHTML = `<div class="sheet"><div class="row"><h2>Before we send it</h2><button class="action" onclick="closeDrawer()">Close</button></div><label class="label">Your name</label><input id="cust-name" class="input" placeholder="e.g. Rahul Sharma"><label class="label">Phone number</label><input id="cust-phone" class="input" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number"><div class="notice">Table <b>${state.table || "—"}</b> · Details are stored with your order.</div><button class="primary" onclick="paymentForm()">Continue to payment</button></div>` }
+function paymentForm() {
   const name = $("#cust-name").value.trim(), phone = $("#cust-phone").value.trim();
   if (!name || !/^\d{10}$/.test(phone)) { alert("Please enter a valid name and 10-digit phone number."); return }
   state.customer = { name, phone };
@@ -92,7 +48,7 @@ function placeOrderFromCustomer() {
  <div class="total">Payable: ${money(total())}</div><button id="payment-submit" class="primary" onclick="placeOrder()">Place order</button>
  <p id="payment-note" class="muted" style="font-size:11px;margin-top:12px">Counter orders go directly to the kitchen.</p></div>`;
   updatePaymentUI();
-
+}
 async function selectPay(p) {
   state.payment = p;
   $("#pay-counter").classList.toggle("selected", p === "counter");
