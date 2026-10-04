@@ -19,7 +19,7 @@ function render() {
   document.getElementById("app").innerHTML = `
 <header class="nav">
   <div class="brand">
-    <img src="/C:\Users\Victus\Downloads\seth-sawaliya-cafe-phase6.2-order-workflow\public\seth sanwaliyaa logo.jpeg" alt="Seth Sanwaliya" class="brand-logo">
+    <img src="/C:logo.jpeg" alt="Seth Sanwaliya" class="brand-logo">
     <div>
       <div>Seth Sanwaliya</div>
       <span>RESTAURANT</span>
