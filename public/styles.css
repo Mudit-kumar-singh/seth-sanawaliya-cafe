@@ -798,17 +798,13 @@ a {
 
   /* Cart button - mobile */
   .cart {
-    position: fixed;
-    top: 10px;
-    right: 12px;
-    left: auto;
-    bottom: auto;
-    width: auto;
-    padding: 10px 14px;
-    font-size: 13px;
-    z-index: 50;
-    white-space: nowrap;
-  }
+  right: 12px;
+  left: auto;
+  bottom: 12px;
+  width: auto;
+  padding: 13px 16px;
+  text-align: center;
+}
 
   /* Cart / checkout drawer */
   .sheet {
