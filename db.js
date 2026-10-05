@@ -116,13 +116,13 @@ const menuCount = db.prepare("SELECT COUNT(*) AS c FROM menu_items").get().c;
 if (menuCount === 0) {
   const seed = [
     ["Pizza","O Com Pizza",79],["Pizza","Magetta Pizza",89],["Pizza","Tandoori Paneer Pizza",129],["Pizza","Sweet Corn Pizza",99],
-    ["Sandwich","Veg Cheese Grill",79],["Sandwich","Tandoori Paneer",99],["Sandwich","Veg Grill",79],["Sandwich","Bombe Sandwich",99],
-    ["Pasta","Red Pasta",99],["Pasta","White Pasta",129],
-    ["Burger","Veg Aloo Tikki",69],["Burger","Veg Cheese",89],["Burger","Veg Peri Peri",79],
-    ["Meggie","Plain Meggie",69],["Meggie","Veg Masala Meggie",79],["Meggie","Cheese Meggie",79],
-    ["French Fries","Peri Peri",99],["French Fries","Plain",69],["French Fries","Masala",79],
-    ["Chinese","Veg Chawmin",79],["Chinese","Chilly Paneer (Dry)",119],["Chinese","Chilly Paneer (Gravy)",139],["Chinese","Dragon Patato",99],["Chinese","Corn Fritters",89],["Chinese","Fried Rice",89],["Chinese","Manchurian (Dry)",99],["Chinese","Manchurian (Gravy)",119],["Chinese","Chinese Bhel",99],
-    ["Shakes","Oreo Shake",79],["Shakes","Kirket Shake",69],["Shakes","Chocolate Shake",79],["Shakes","Pineapple Shake",69],["Shakes","Banana Shake",79],["Shakes","Mango Shake",69],
+    ["Sandwich","Veg Cheese Grill Sandwich",79],["Sandwich","Tandoori Paneer Sandwich",99],["Sandwich","Veg Grill Sandwich",79],["Sandwich","Bombe Sandwich",99],
+    ["Pasta","Red Sauce Pasta",99],["Pasta","White Sauce Pasta",129],
+    ["Burger","Veg Aloo Tikki Burger",69],["Burger","Veg Cheese Burger",89],["Burger","Veg Peri Peri Burger",79],
+    ["Maggi","Plain Maggi",69],["Maggi","Veg Masala Maggi",79],["Maggi","Cheese Maggi",79],
+    ["French Fries","Peri Peri French Fries",99],["French Fries","Plain French Fries",69],["French Fries","Masala French Fries",79],
+    ["Chinese","Veg Chowmein",79],["Chinese","Chilly Paneer (Dry)",119],["Chinese","Chilly Paneer (Gravy)",139],["Chinese","Dragon Patato",99],["Chinese","Corn Fritters",89],["Chinese","Fried Rice",89],["Chinese","Manchurian (Dry)",99],["Chinese","Manchurian (Gravy)",119],["Chinese","Chinese Bhel",99],
+    ["Shakes","Oreo Shake",79],["Shakes","Kitkat Shake",69],["Shakes","Chocolate Shake",79],["Shakes","Pineapple Shake",69],["Shakes","Banana Shake",79],["Shakes","Mango Shake",69],
     ["Beverage","Hot Coffee",30],["Beverage","Cold Coffee",80],["Beverage","Tandoori Tea",30],["Beverage","Kulhad Tea",20],["Beverage","Red Bull",130],["Beverage","Hell",60],["Beverage","Diet Coke",50],["Beverage","Water",20],
     ["Paneer Sabji","Paneer Butter Masala",170],["Paneer Sabji","Shahi Paneer",180],["Paneer Sabji","Handi Paneer",180],["Paneer Sabji","Kadai Paneer",200],["Paneer Sabji","Mutter Paneer",170],["Paneer Sabji","Palak Paneer",200],
     ["Dal","Dal Fry",120],["Dal","Dal Tadka",140],
@@ -130,7 +130,7 @@ if (menuCount === 0) {
     ["Raita","Bhindi Raita",60],["Raita","Veg Raita",70],["Raita","Plan Chach",20],["Raita","Masala",30],["Raita","Plan Dahi",50],
     ["Snacks","Masala Papad",30],["Snacks","Plan Papad",10],["Snacks","Masala Khichiya",40],["Snacks","Plan Khichiya",20],["Snacks","Pinet Masala",80],
     ["Roti","Tawa Plan Roti",15],["Roti","Tawa Butter Roti",20],["Roti","Aloo Paratha",80],["Roti","Paneer Paratha",100],["Roti","Veg Paratha",70],
-    ["Rice","Plan Rice",60],["Rice","Jeera Rice",70],["Rice","Veg Biryani",150],["Rice","Veg Pulao",160]
+    ["Rice","Plain Rice",60],["Rice","Jeera Rice",70],["Rice","Veg Biryani",150],["Rice","Veg Pulao",160]
   ];
   const insert = db.prepare("INSERT INTO menu_items(category,name,price) VALUES(?,?,?)");
   const tx = db.transaction(() => seed.forEach(x => insert.run(...x)));
