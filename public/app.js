@@ -41,7 +41,7 @@ function paymentForm() {
   const name = $("#cust-name").value.trim();
   const phone = $("#cust-phone").value.trim();
 
-  if (!name || !/^\d{10}$/.test(phone)) {
+  if (!name || !/^[6-9]\d{9}$/.test(phone)) {
     alert("Please enter a valid name and 10-digit phone number.");
     return;
   }

@@ -287,7 +287,7 @@ app.post("/api/orders", orderLimiter, (req, res) => {
         error: "Invalid table QR. Please scan the QR code placed on your table."
       });
     }
-    if (!customer || !String(customer.name || "").trim() || !/^\d{10}$/.test(String(customer.phone || ""))) {
+    if (!customer || !String(customer.name || "").trim() || /^[6-9]\d{9}$/.test(String(customer.phone || ""))) {
       return res.status(400).json({ error: "Valid customer name and 10-digit phone are required." });
     }
     if (!Array.isArray(items) || !items.length) return res.status(400).json({ error: "Cart is empty." });

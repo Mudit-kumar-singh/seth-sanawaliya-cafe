@@ -95,8 +95,189 @@ async function resetUserPassword(id, username) { const next = prompt(`New passwo
 async function changePassword() { const current = prompt("Current password"); if (!current) return; const next = prompt("New password (8+ chars)"); if (!next) return; try { await api("/auth/change-password", { method: "POST", body: JSON.stringify({ currentPassword: current, newPassword: next }) }); alert("Password changed successfully."); } catch (e) { alert(e.message) } }
 async function logout() { try { await api("/auth/logout", { method: "POST" }) } finally { if (staffRefreshTimer) clearInterval(staffRefreshTimer); staffRefreshTimer = null; renderLogin() } }
 function openKitchen() { window.open("/kitchen.html", "_blank"); }
-function printReceipt(id) { const o = state.orders.find(x => x.id === id); if (!o) return; const w = window.open("", "_blank", "width=420,height=700"); const rows = o.items.map(i => `<tr><td>${i.qty}× ${esc(i.name)}</td><td style="text-align:right">${money(i.price * i.qty)}</td></tr>`).join(""); w.document.write(`<!doctype html><html><head><title>Receipt #${o.id}</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}.c{text-align:center}.line{border-top:1px dashed #777;margin:14px 0}table{width:100%;border-collapse:collapse}td{padding:6px 0}.small{font-size:12px;color:#555}</style></head><body><div class="c"><h2>Seth Sanwaliya Restaurant</h2><div class="small">Good Food • Good Mood</div></div><div class="line"></div><p><b>Order #${o.id}</b><br>Table ${o.table}<br>${new Date(o.createdAt).toLocaleString()}</p><p>${esc(o.customer.name)} · ${esc(o.customer.phone)}</p><table>${rows}</table><div class="line"></div><h3 style="text-align:right">Total: ${money(o.total)}</h3><p class="small">Payment: ${o.payment.toUpperCase()} · ${o.paymentStatus}</p><div class="c small">Thank you! Please visit again.</div><script>window.onload=()=>window.print()<\/script></body></html>`); w.document.close() }
-function makeQRs() {
+function printReceipt(id){
+  const o=state.orders.find(x=>x.id===id);
+  if(!o)return;
+
+  const w=window.open("","_blank","width=420,height=700");
+
+  const rows=o.items.map(i=>`
+    <tr>
+      <td>${i.qty} × ${esc(i.name)}</td>
+      <td style="text-align:right">${money(i.price*i.qty)}</td>
+    </tr>
+  `).join("");
+
+  w.document.write(`
+    <!doctype html>
+    <html>
+    <head>
+      <title>Receipt #${o.id}</title>
+
+      <style>
+        *{
+          box-sizing:border-box;
+        }
+
+        body{
+          font-family:Arial,sans-serif;
+          margin:0;
+          padding:28px;
+          color:#111;
+          background:#fff;
+        }
+
+        .receipt{
+          max-width:360px;
+          margin:auto;
+        }
+
+        .center{
+          text-align:center;
+        }
+
+        h2{
+          margin:0 0 6px;
+          font-size:22px;
+        }
+
+        .subtitle{
+          font-size:12px;
+          color:#555;
+        }
+
+        .line{
+          border-top:1px dashed #777;
+          margin:16px 0;
+        }
+
+        .order-info{
+          font-size:13px;
+          line-height:1.6;
+        }
+
+        .customer{
+          font-size:13px;
+          margin-top:10px;
+        }
+
+        table{
+          width:100%;
+          border-collapse:collapse;
+          margin-top:14px;
+        }
+
+        td{
+          padding:7px 0;
+          font-size:13px;
+          vertical-align:top;
+        }
+
+        .total{
+          text-align:right;
+          font-size:17px;
+          font-weight:bold;
+          margin-top:10px;
+        }
+
+        .payment{
+          font-size:11px;
+          color:#555;
+          margin-top:12px;
+        }
+
+        .thankyou{
+          text-align:center;
+          margin-top:28px;
+          font-size:14px;
+          font-weight:bold;
+        }
+
+        .feedback{
+          text-align:center;
+          margin-top:8px;
+          font-size:11px;
+          color:#555;
+          line-height:1.5;
+        }
+
+        .phone{
+          font-weight:bold;
+          color:#111;
+        }
+
+        @media print{
+          body{
+            padding:15px;
+          }
+        }
+      </style>
+    </head>
+
+    <body>
+
+      <div class="receipt">
+
+        <div class="center">
+          <h2>Seth Sanwaliya Restaurant</h2>
+          <div class="subtitle">Good Food • Good Mood</div>
+        </div>
+
+        <div class="line"></div>
+
+        <div class="order-info">
+          <b>Order #${o.id}</b><br>
+          Table ${o.table}<br>
+          ${new Date(o.createdAt).toLocaleString()}
+        </div>
+
+        <div class="customer">
+          <b>Customer:</b> ${esc(o.customer.name)}<br>
+          <b>Phone:</b> ${esc(o.customer.phone)}
+        </div>
+
+        <table>
+          ${rows}
+        </table>
+
+        <div class="line"></div>
+
+        <div class="total">
+          Total: ${money(o.total)}
+        </div>
+
+        <div class="payment">
+          Payment: ${o.payment.toUpperCase()} · ${o.paymentStatus}
+        </div>
+
+        <div class="line"></div>
+
+        <div class="thankyou">
+          Thank you for visiting us! ❤️
+          <br>
+          Please come again!
+        </div>
+
+        <div class="feedback">
+          For any feedback, suggestions or service assistance,
+          please contact us at
+          <span class="phone">9784437934</span>.
+          <br><br>
+          We look forward to serving you again!
+        </div>
+
+      </div>
+
+      <script>
+        window.onload=()=>window.print()
+      <\/script>
+
+    </body>
+    </html>
+  `);
+
+  w.document.close();
+}function makeQRs() {
   for (let i = 1; i <= 21; i++) {
     const el = $("#qr-" + i);
     const table = state.tables.find(x => Number(x.id) === i);
