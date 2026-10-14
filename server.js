@@ -553,12 +553,39 @@ app.get("/api/dashboard", ownerOnly, (req, res) => {
     FROM orders WHERE date(created_at,'localtime')=date('now','localtime') AND status<>'cancelled'
   `).get();
   const status = db.prepare("SELECT status,COUNT(*) AS count FROM orders WHERE date(created_at,'localtime')=date('now','localtime') GROUP BY status").all();
+
+  const yesterday = db.prepare(`
+  SELECT
+    COUNT(*) AS orders,
+    COALESCE(SUM(
+      CASE
+        WHEN payment_method = 'counter' OR payment_status = 'paid'
+        THEN total ELSE 0
+      END
+    ), 0) AS revenue,
+    COALESCE(SUM(
+      CASE
+        WHEN payment_method = 'upi' AND payment_status = 'paid'
+        THEN total ELSE 0
+      END
+    ), 0) AS upi,
+    COALESCE(SUM(
+      CASE
+        WHEN payment_method = 'counter' THEN total ELSE 0
+      END
+    ), 0) AS counter
+  FROM orders
+  WHERE date(created_at, 'localtime')
+    = date('now', 'localtime', '-1 day')
+    AND status <> 'cancelled'
+`).get();
+
   const topItems = db.prepare(`
     SELECT item_name AS name,SUM(quantity) AS quantity FROM order_items oi JOIN orders o ON o.id=oi.order_id
     WHERE date(o.created_at,'localtime')=date('now','localtime') AND o.status<>'cancelled' AND (o.payment_method='counter' OR o.payment_status='paid')
     GROUP BY menu_item_id ORDER BY quantity DESC LIMIT 10
   `).all();
-  res.json({ today, status, topItems });
+  res.json({ today, yesterday, status, topItems });
 });
 
 app.get("/api/menu/admin", ownerOnly, (req, res) => {

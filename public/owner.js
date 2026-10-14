@@ -277,7 +277,71 @@ function renderStaff() {
 async function refreshStaffNow() { try { await loadAll(); renderStaff() } catch (e) { alert(e.message) } }
 
 function esc(s) { return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;") }
-function overview(d, o) { return `<div class="stats"><div class="stat"><small>Today's sales</small><strong>${money(d.revenue)}</strong></div><div class="stat"><small>Today's orders</small><strong>${d.orders}</strong></div><div class="stat"><small>UPI sales</small><strong>${money(d.upi)}</strong></div><div class="stat"><small>Counter sales</small><strong>${money(d.counter)}</strong></div></div><div class="admin-grid"><div class="panel"><h2>Recent orders</h2>${ordersHTML(o)}</div><div class="panel"><h2>Top items today</h2>${state.dash.topItems.map((x, i) => `<div class="row"><span>${i + 1}. ${esc(x.name)}</span><b>${x.quantity} sold</b></div>`).join("") || '<div class="empty">No sales yet today.</div>'}</div></div>` }
+
+function overview(d, o) {
+  const y = state.dash.yesterday || {
+    revenue: 0,
+    upi: 0,
+    counter: 0
+  };
+
+  return `
+    <div class="stats">
+      <div class="stat">
+        <small>Today's sales</small>
+        <strong>${money(d.revenue)}</strong>
+      </div>
+      <div class="stat">
+        <small>Today's orders</small>
+        <strong>${d.orders}</strong>
+      </div>
+      <div class="stat">
+        <small>UPI sales</small>
+        <strong>${money(d.upi)}</strong>
+      </div>
+      <div class="stat">
+        <small>Counter sales</small>
+        <strong>${money(d.counter)}</strong>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:20px">
+      <h2>Yesterday's Sales</h2>
+      <div class="stats">
+        <div class="stat">
+          <small>Total Sales</small>
+          <strong>${money(y.revenue)}</strong>
+        </div>
+        <div class="stat">
+          <small>UPI Sales</small>
+          <strong>${money(y.upi)}</strong>
+        </div>
+        <div class="stat">
+          <small>Counter Sales</small>
+          <strong>${money(y.counter)}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-grid">
+      <div class="panel">
+        <h2>Recent orders</h2>
+        ${ordersHTML(o)}
+      </div>
+
+      <div class="panel">
+        <h2>Top items today</h2>
+        ${state.dash.topItems.map((x, i) =>
+          `<div class="row">
+            <span>${i + 1}. ${esc(x.name)}</span>
+            <b>${x.quantity} sold</b>
+          </div>`
+        ).join("") || '<div class="empty">No sales yet today.</div>'}
+      </div>
+    </div>
+  `;
+}
+
 function historyHTML(o) {
   if (!o.statusHistory?.length) return '<span class="muted">No history yet.</span>';
   return `<details><summary class="action" style="display:inline-block;cursor:pointer">Timeline</summary><div class="status-timeline">${o.statusHistory.map((h, i) => `<div class="timeline-row"><span class="timeline-dot"></span><div><b>${esc(h.status)}</b><small>${new Date(h.changedAt).toLocaleString()}${h.changedBy ? ` · ${esc(h.changedBy)}` : ''}</small></div></div>`).join('')}</div></details>`;
