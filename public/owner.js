@@ -32,7 +32,8 @@ function startStaffRefresh() {
   }, 5000);
 }
 
-function enableOrderAlertSound() {
+
+async function enableOrderAlertSound() {
   try {
     const AudioContextClass =
       window.AudioContext || window.webkitAudioContext;
@@ -46,16 +47,32 @@ function enableOrderAlertSound() {
       ownerAlertAudio = new AudioContextClass();
     }
 
-    ownerAlertAudio.resume().then(() => {
-      playOrderAlertSound();
+    await ownerAlertAudio.resume();
+    playOrderAlertSound();
 
-      const button = document.getElementById("enable-order-sound");
-      if (button) button.textContent = "Sound alerts enabled ✓";
-    });
+    localStorage.setItem("ownerSoundAlertsEnabled", "true");
+
+    const button = document.getElementById("enable-order-sound");
+    if (button) {
+      button.textContent = "Sound alerts enabled ✓";
+    }
   } catch (error) {
     console.error("Could not enable order sound:", error);
   }
 }
+
+function restoreOrderSoundPreference() {
+  const button = document.getElementById("enable-order-sound");
+
+  if (
+    button &&
+    localStorage.getItem("ownerSoundAlertsEnabled") === "true"
+  ) {
+    button.textContent = "Sound alerts saved — click to activate";
+  }
+}
+
+
 
 function playOrderAlertSound() {
   if (!ownerAlertAudio || ownerAlertAudio.state !== "running") return;
@@ -252,7 +269,7 @@ function render() {
 >
   Enable sound alerts
 </button><button class="action" onclick="openKitchen()">Kitchen</button><button class="action" onclick="logout()">Logout</button></div></header><div style="padding-top:20px"><h1 style="font-family:'Playfair Display';margin-bottom:4px">Owner Dashboard</h1><div class="muted">Full management and operations panel.</div></div><nav class="admin-nav"><button class="active" onclick="tab('overview',this)">Overview</button><button onclick="tab('orders',this)">Orders</button><button onclick="tab('menu',this)">Menu</button><button onclick="tab('tables',this)">21 Tables + QR</button><button onclick="tab('reports',this)">Reports</button><button onclick="tab('users',this)">Staff</button></nav><section id="overview">${overview(d, o)}</section><section id="orders" class="hidden">${ordersHTML(state.orders)}</section><section id="menu" class="hidden">${menuHTML()}</section><section id="tables" class="hidden">${tablesHTML()}</section><section id="reports" class="hidden">${reportsHTML()}</section><section id="users" class="hidden">${usersHTML()}</section></div>`;
-  setTimeout(makeQRs, 50);
+  setTimeout(makeQRs, 50);restoreOrderSoundPreference();
 }
 function renderStaff() {
   document.getElementById("owner-app").innerHTML = `<div class="admin-wrap"><header class="nav" style="margin:-20px -20px 0"><div class="brand">Seth Sanwaliya<span>STAFF PORTAL</span></div><div class="row"><span class="muted">${esc(state.me.username)} · staff</span><button class="action" onclick="changePassword()">Change password</button><button class="action" onclick="openKitchen()">Kitchen</button><button class="action" onclick="logout()">Logout</button></div></header><div style="padding-top:20px"><div class="row" style="align-items:flex-end"><div><h1 style="font-family:'Playfair Display';margin-bottom:4px">Staff Portal</h1><div class="muted">Orders and kitchen operations only. Auto-refreshes every 5 seconds.</div></div><button class="action" onclick="refreshStaffNow()">Refresh orders</button></div></div><nav class="admin-nav"><button class="active" onclick="tab('orders',this)">Orders <span class="nav-count">${state.orders.filter(x => ['new', 'preparing', 'ready'].includes(x.status)).length}</span></button><button onclick="openKitchen()">Kitchen Display</button></nav><section id="orders">${ordersHTML(state.orders)}</section></div>`;
