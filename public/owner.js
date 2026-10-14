@@ -4,10 +4,25 @@ const $ = s => document.querySelector(s), money = n => "₹" + Number(n).toLocal
 async function api(path, opts) { const r = await fetch(API + path, { credentials: "same-origin", headers: { "Content-Type": "application/json", ...(opts?.headers || {}) }, ...opts }); let d = null; try { d = await r.json() } catch { } if (!r.ok) throw new Error(d?.error || "Request failed"); return d }
 let state = { orders: [], menu: [], tables: [], dash: null, me: null, users: [], paymentConfig: null };
 let staffRefreshTimer = null;
+// Owner dashboard new-order notifications
+let ownerOrderAlertTimer = null;
+let seenOwnerOrderIds = new Set();
+let ownerAlertAudio = null;
+let ownerAlertBusy = false;
 
 async function boot() {
-  try { const me = await api("/auth/me"); state.me = me.user || me; await loadAll(); render(); if (state.me.role === "staff") startStaffRefresh(); }
-  catch (e) { renderLogin() }
+try {
+  const me = await api("/auth/me");
+  state.me = me.user || me;
+  await loadAll();
+  render();
+
+  if (state.me.role === "staff") {
+    startStaffRefresh();
+  } else if (state.me.role === "owner") {
+    startOwnerOrderNotifications();
+  }
+}  catch (e) { renderLogin() }
 }
 function startStaffRefresh() {
   if (staffRefreshTimer) clearInterval(staffRefreshTimer);
@@ -16,10 +31,205 @@ function startStaffRefresh() {
     try { await loadAll(); renderStaff() } catch { }
   }, 5000);
 }
+
+function enableOrderAlertSound() {
+  try {
+    const AudioContextClass =
+      window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContextClass) {
+      alert("Sound alerts are not supported by this browser.");
+      return;
+    }
+
+    if (!ownerAlertAudio) {
+      ownerAlertAudio = new AudioContextClass();
+    }
+
+    ownerAlertAudio.resume().then(() => {
+      playOrderAlertSound();
+
+      const button = document.getElementById("enable-order-sound");
+      if (button) button.textContent = "Sound alerts enabled ✓";
+    });
+  } catch (error) {
+    console.error("Could not enable order sound:", error);
+  }
+}
+
+function playOrderAlertSound() {
+  if (!ownerAlertAudio || ownerAlertAudio.state !== "running") return;
+
+  try {
+    const oscillator = ownerAlertAudio.createOscillator();
+    const gain = ownerAlertAudio.createGain();
+    const now = ownerAlertAudio.currentTime;
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(880, now);
+    oscillator.frequency.setValueAtTime(660, now + 0.18);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.18, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+
+    oscillator.connect(gain);
+    gain.connect(ownerAlertAudio.destination);
+
+    oscillator.start(now);
+    oscillator.stop(now + 0.45);
+  } catch (error) {
+    console.error("Could not play order alert:", error);
+  }
+}
+
+function showOwnerOrderToast(order) {
+  let stack = document.getElementById("owner-order-toast-stack");
+
+  if (!stack) {
+    stack = document.createElement("div");
+    stack.id = "owner-order-toast-stack";
+
+    Object.assign(stack.style, {
+      position: "fixed",
+      top: "16px",
+      right: "16px",
+      zIndex: "99999",
+      width: "min(360px, calc(100vw - 32px))",
+      display: "flex",
+      flexDirection: "column",
+      gap: "10px"
+    });
+
+    document.body.appendChild(stack);
+  }
+
+  const toast = document.createElement("div");
+
+  Object.assign(toast.style, {
+    background: "#17251e",
+    color: "#ffffff",
+    padding: "16px",
+    borderRadius: "12px",
+    border: "1px solid #c9a45c",
+    boxShadow: "0 8px 28px rgba(0,0,0,0.28)",
+    fontFamily: "Arial, sans-serif",
+    lineHeight: "1.5",
+    overflowWrap: "anywhere"
+  });
+
+  const items = (order.items || [])
+    .map(item => `${item.qty}× ${esc(item.name)}`)
+    .join(", ");
+
+  toast.innerHTML = `
+    <div style="display:flex;justify-content:space-between;gap:12px">
+      <strong style="color:#f3cc79;font-size:17px">
+        🔔 New Order Received!
+      </strong>
+      <button type="button" aria-label="Dismiss notification"
+        style="background:transparent;color:white;border:0;
+        font-size:20px;cursor:pointer">×</button>
+    </div>
+    <div style="margin-top:8px">
+      <strong>Order #${esc(order.id)}</strong>
+      · Table ${esc(order.table)}
+    </div>
+    <div>Customer: ${esc(order.customer?.name || "Customer")}</div>
+    <div>Items: ${items || "See dashboard"}</div>
+    <div style="margin-top:6px">
+      <strong>Total: ${money(order.total)}</strong>
+    </div>
+    <button type="button" class="action"
+      style="margin-top:12px">View orders</button>
+  `;
+
+  toast.querySelector('[aria-label="Dismiss notification"]')
+    .addEventListener("click", () => toast.remove());
+
+  toast.querySelectorAll("button")[1].addEventListener("click", () => {
+    const ordersTab = [...document.querySelectorAll(".admin-nav button")]
+  .find(button => button.textContent.trim().startsWith("Orders"));
+
+    if (ordersTab) ordersTab.click();
+
+    toast.remove();
+  });
+
+  stack.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 12000);
+}
+
+function startOwnerOrderNotifications() {
+  if (state.me?.role !== "owner") return;
+
+  if (ownerOrderAlertTimer) {
+    clearInterval(ownerOrderAlertTimer);
+  }
+
+  // Establish a baseline so existing orders do not trigger alerts.
+  seenOwnerOrderIds = new Set(
+    state.orders.map(order => String(order.id))
+  );
+
+  ownerOrderAlertTimer = setInterval(async () => {
+    if (ownerAlertBusy || state.me?.role !== "owner") return;
+
+    ownerAlertBusy = true;
+
+    try {
+      const latestOrders = await api("/orders");
+
+      const newOrders = latestOrders.filter(
+        order => !seenOwnerOrderIds.has(String(order.id))
+      );
+
+      if (newOrders.length > 0) {
+        // Refresh dashboard data before showing the alerts.
+        await loadAll();
+        render();
+
+        latestOrders.forEach(order => {
+          seenOwnerOrderIds.add(String(order.id));
+        });
+
+        playOrderAlertSound();
+
+        // Show each new order, oldest first.
+        newOrders.reverse().forEach(showOwnerOrderToast);
+      } else {
+        latestOrders.forEach(order => {
+          seenOwnerOrderIds.add(String(order.id));
+        });
+      }
+    } catch (error) {
+      console.error("Order notification check failed:", error);
+    } finally {
+      ownerAlertBusy = false;
+    }
+  }, 5000);
+}
+
 async function login() {
   const username = $("#login-user").value.trim(), password = $("#login-pass").value;
   $("#login-error").textContent = "";
-  try { await api("/auth/login", { method: "POST", body: JSON.stringify({ username, password }) }); const me = await api("/auth/me"); state.me = me.user || me; await loadAll(); render() }
+  try { await api("/auth/login", {
+  method: "POST",
+  body: JSON.stringify({ username, password })
+});
+
+const me = await api("/auth/me");
+state.me = me.user || me;
+
+await loadAll();
+render();
+
+if (state.me.role === "owner") {
+  startOwnerOrderNotifications();
+} else if (state.me.role === "staff") {
+  startStaffRefresh();
+} }
   catch (e) { $("#login-error").textContent = e.message }
 }
 function renderLogin() {
@@ -35,7 +245,13 @@ async function loadAll() {
 function render() {
   if (state.me.role !== "owner") return renderStaff();
   const d = state.dash.today, o = state.orders.slice(0, 12);
-  document.getElementById("owner-app").innerHTML = `<div class="admin-wrap"><header class="nav" style="margin:-20px -20px 0"><div class="brand">Seth Sanwaliya<span>OWNER DASHBOARD</span></div><div class="row"><span class="muted">${esc(state.me.username)} · owner</span><button class="action" onclick="changePassword()">Change password</button><button class="action" onclick="openKitchen()">Kitchen</button><button class="action" onclick="logout()">Logout</button></div></header><div style="padding-top:20px"><h1 style="font-family:'Playfair Display';margin-bottom:4px">Owner Dashboard</h1><div class="muted">Full management and operations panel.</div></div><nav class="admin-nav"><button class="active" onclick="tab('overview',this)">Overview</button><button onclick="tab('orders',this)">Orders</button><button onclick="tab('menu',this)">Menu</button><button onclick="tab('tables',this)">21 Tables + QR</button><button onclick="tab('reports',this)">Reports</button><button onclick="tab('users',this)">Staff</button></nav><section id="overview">${overview(d, o)}</section><section id="orders" class="hidden">${ordersHTML(state.orders)}</section><section id="menu" class="hidden">${menuHTML()}</section><section id="tables" class="hidden">${tablesHTML()}</section><section id="reports" class="hidden">${reportsHTML()}</section><section id="users" class="hidden">${usersHTML()}</section></div>`;
+  document.getElementById("owner-app").innerHTML = `<div class="admin-wrap"><header class="nav" style="margin:-20px -20px 0"><div class="brand">Seth Sanwaliya<span>OWNER DASHBOARD</span></div><div class="row"><span class="muted">${esc(state.me.username)} · owner</span><button class="action" onclick="changePassword()">Change password</button><button
+  class="action"
+  id="enable-order-sound"
+  onclick="enableOrderAlertSound()"
+>
+  Enable sound alerts
+</button><button class="action" onclick="openKitchen()">Kitchen</button><button class="action" onclick="logout()">Logout</button></div></header><div style="padding-top:20px"><h1 style="font-family:'Playfair Display';margin-bottom:4px">Owner Dashboard</h1><div class="muted">Full management and operations panel.</div></div><nav class="admin-nav"><button class="active" onclick="tab('overview',this)">Overview</button><button onclick="tab('orders',this)">Orders</button><button onclick="tab('menu',this)">Menu</button><button onclick="tab('tables',this)">21 Tables + QR</button><button onclick="tab('reports',this)">Reports</button><button onclick="tab('users',this)">Staff</button></nav><section id="overview">${overview(d, o)}</section><section id="orders" class="hidden">${ordersHTML(state.orders)}</section><section id="menu" class="hidden">${menuHTML()}</section><section id="tables" class="hidden">${tablesHTML()}</section><section id="reports" class="hidden">${reportsHTML()}</section><section id="users" class="hidden">${usersHTML()}</section></div>`;
   setTimeout(makeQRs, 50);
 }
 function renderStaff() {
@@ -93,7 +309,13 @@ async function addUser() { const username = prompt("Username (3-30 chars)"); if 
 async function toggleUser(id, active) { try { await api("/users/" + id, { method: "PATCH", body: JSON.stringify({ active }) }); await loadAll(); render() } catch (e) { alert(e.message) } }
 async function resetUserPassword(id, username) { const next = prompt(`New password for ${username} (8+ chars)`); if (!next) return; try { await api("/users/" + id + "/reset-password", { method: "POST", body: JSON.stringify({ password: next }) }); alert("Password reset successfully."); } catch (e) { alert(e.message) } }
 async function changePassword() { const current = prompt("Current password"); if (!current) return; const next = prompt("New password (8+ chars)"); if (!next) return; try { await api("/auth/change-password", { method: "POST", body: JSON.stringify({ currentPassword: current, newPassword: next }) }); alert("Password changed successfully."); } catch (e) { alert(e.message) } }
-async function logout() { try { await api("/auth/logout", { method: "POST" }) } finally { if (staffRefreshTimer) clearInterval(staffRefreshTimer); staffRefreshTimer = null; renderLogin() } }
+async function logout() { try { await api("/auth/logout", { method: "POST" }) } finally { if (staffRefreshTimer) clearInterval(staffRefreshTimer);if (ownerOrderAlertTimer) {
+  clearInterval(ownerOrderAlertTimer);
+}
+
+ownerOrderAlertTimer = null;
+seenOwnerOrderIds.clear();
+ staffRefreshTimer = null; renderLogin() } }
 function openKitchen() { window.open("/kitchen.html", "_blank"); }
 function printReceipt(id){
   const o=state.orders.find(x=>x.id===id);
