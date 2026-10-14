@@ -11,18 +11,18 @@ let ownerAlertAudio = null;
 let ownerAlertBusy = false;
 
 async function boot() {
-try {
-  const me = await api("/auth/me");
-  state.me = me.user || me;
-  await loadAll();
-  render();
+  try {
+    const me = await api("/auth/me");
+    state.me = me.user || me;
+    await loadAll();
+    render();
 
-  if (state.me.role === "staff") {
-    startStaffRefresh();
-  } else if (state.me.role === "owner") {
-    startOwnerOrderNotifications();
-  }
-}  catch (e) { renderLogin() }
+    if (state.me.role === "staff") {
+      startStaffRefresh();
+    } else if (state.me.role === "owner") {
+      startOwnerOrderNotifications();
+    }
+  } catch (e) { renderLogin() }
 }
 function startStaffRefresh() {
   if (staffRefreshTimer) clearInterval(staffRefreshTimer);
@@ -166,7 +166,7 @@ function showOwnerOrderToast(order) {
 
   toast.querySelectorAll("button")[1].addEventListener("click", () => {
     const ordersTab = [...document.querySelectorAll(".admin-nav button")]
-  .find(button => button.textContent.trim().startsWith("Orders"));
+      .find(button => button.textContent.trim().startsWith("Orders"));
 
     if (ordersTab) ordersTab.click();
 
@@ -231,22 +231,24 @@ function startOwnerOrderNotifications() {
 async function login() {
   const username = $("#login-user").value.trim(), password = $("#login-pass").value;
   $("#login-error").textContent = "";
-  try { await api("/auth/login", {
-  method: "POST",
-  body: JSON.stringify({ username, password })
-});
+  try {
+    await api("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ username, password })
+    });
 
-const me = await api("/auth/me");
-state.me = me.user || me;
+    const me = await api("/auth/me");
+    state.me = me.user || me;
 
-await loadAll();
-render();
+    await loadAll();
+    render();
 
-if (state.me.role === "owner") {
-  startOwnerOrderNotifications();
-} else if (state.me.role === "staff") {
-  startStaffRefresh();
-} }
+    if (state.me.role === "owner") {
+      startOwnerOrderNotifications();
+    } else if (state.me.role === "staff") {
+      startStaffRefresh();
+    }
+  }
   catch (e) { $("#login-error").textContent = e.message }
 }
 function renderLogin() {
@@ -269,7 +271,7 @@ function render() {
 >
   Enable sound alerts
 </button><button class="action" onclick="openKitchen()">Kitchen</button><button class="action" onclick="logout()">Logout</button></div></header><div style="padding-top:20px"><h1 style="font-family:'Playfair Display';margin-bottom:4px">Owner Dashboard</h1><div class="muted">Full management and operations panel.</div></div><nav class="admin-nav"><button class="active" onclick="tab('overview',this)">Overview</button><button onclick="tab('orders',this)">Orders</button><button onclick="tab('menu',this)">Menu</button><button onclick="tab('tables',this)">21 Tables + QR</button><button onclick="tab('reports',this)">Reports</button><button onclick="tab('users',this)">Staff</button></nav><section id="overview">${overview(d, o)}</section><section id="orders" class="hidden">${ordersHTML(state.orders)}</section><section id="menu" class="hidden">${menuHTML()}</section><section id="tables" class="hidden">${tablesHTML()}</section><section id="reports" class="hidden">${reportsHTML()}</section><section id="users" class="hidden">${usersHTML()}</section></div>`;
-  setTimeout(makeQRs, 50);restoreOrderSoundPreference();
+  setTimeout(makeQRs, 50); restoreOrderSoundPreference();
 }
 function renderStaff() {
   document.getElementById("owner-app").innerHTML = `<div class="admin-wrap"><header class="nav" style="margin:-20px -20px 0"><div class="brand">Seth Sanwaliya<span>STAFF PORTAL</span></div><div class="row"><span class="muted">${esc(state.me.username)} · staff</span><button class="action" onclick="changePassword()">Change password</button><button class="action" onclick="openKitchen()">Kitchen</button><button class="action" onclick="logout()">Logout</button></div></header><div style="padding-top:20px"><div class="row" style="align-items:flex-end"><div><h1 style="font-family:'Playfair Display';margin-bottom:4px">Staff Portal</h1><div class="muted">Orders and kitchen operations only. Auto-refreshes every 5 seconds.</div></div><button class="action" onclick="refreshStaffNow()">Refresh orders</button></div></div><nav class="admin-nav"><button class="active" onclick="tab('orders',this)">Orders <span class="nav-count">${state.orders.filter(x => ['new', 'preparing', 'ready'].includes(x.status)).length}</span></button><button onclick="openKitchen()">Kitchen Display</button></nav><section id="orders">${ordersHTML(state.orders)}</section></div>`;
@@ -332,11 +334,11 @@ function overview(d, o) {
       <div class="panel">
         <h2>Top items today</h2>
         ${state.dash.topItems.map((x, i) =>
-          `<div class="row">
+    `<div class="row">
             <span>${i + 1}. ${esc(x.name)}</span>
             <b>${x.quantity} sold</b>
           </div>`
-        ).join("") || '<div class="empty">No sales yet today.</div>'}
+  ).join("") || '<div class="empty">No sales yet today.</div>'}
       </div>
     </div>
   `;
@@ -352,6 +354,26 @@ function nextActions(o) {
   if (o.status === 'ready') return `<button class="action go-action" onclick="statusChange('${o.id}','completed')">Complete</button><button class="action" onclick="statusChange('${o.id}','preparing')">Back to Preparing</button>`;
   return '';
 }
+
+function formatOrderDateTime(dateValue) {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Date unavailable";
+  }
+
+  return date.toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true
+  });
+}
+
 function ordersHTML(arr) {
   if (!arr.length) return '<div class="empty">No orders yet.</div>';
   return `<div class="table-scroll"><table class="data"><thead><tr><th>Order</th><th>Table</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Actions</th></tr></thead><tbody>${arr.map(o => {
@@ -360,7 +382,7 @@ function ordersHTML(arr) {
       o.paymentStatus !== 'paid'
       ? `<br><button class="action" onclick="markPaid('${o.id}')">Mark as Paid</button>`
       : '';
-    return `<tr><td><b>#${o.id}</b><br><small>${new Date(o.createdAt).toLocaleString()}</small><br><small>Updated ${new Date(o.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small></td><td><b>Table ${o.table}</b></td><td>${esc(o.customer.name)}<br><small>${esc(o.customer.phone)}</small></td><td>${o.items.map(i => `${i.qty}× ${esc(i.name)}`).join(', ')}</td><td><b>${money(o.total)}</b></td><td><span class="badge ${o.payment === 'upi' ? 'b-green' : 'b-gold'}">${o.payment.toUpperCase()}</span><br><small>${o.paymentStatus}</small>${manual}</td><td><span class="badge">${o.status}</span><br>${historyHTML(o)}</td><td><div class="order-actions">${nextActions(o)}<button class="action" onclick="printReceipt('${o.id}')">Receipt</button></div></td></tr>`;
+    return `<tr><td><b>#${o.id}</b><br><small>${formatOrderDateTime(o.createdAt)}</small><br><small>Updated ${new Date(o.updatedAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: true })}</small></td><td><b>Table ${o.table}</b></td><td>${esc(o.customer.name)}<br><small>${esc(o.customer.phone)}</small></td><td>${o.items.map(i => `${i.qty}× ${esc(i.name)}`).join(', ')}</td><td><b>${money(o.total)}</b></td><td><span class="badge ${o.payment === 'upi' ? 'b-green' : 'b-gold'}">${o.payment.toUpperCase()}</span><br><small>${o.paymentStatus}</small>${manual}</td><td><span class="badge">${o.status}</span><br>${historyHTML(o)}</td><td><div class="order-actions">${nextActions(o)}<button class="action" onclick="printReceipt('${o.id}')">Receipt</button></div></td></tr>`;
   }).join('')}</tbody></table></div>`;
 }
 
@@ -390,24 +412,48 @@ async function addUser() { const username = prompt("Username (3-30 chars)"); if 
 async function toggleUser(id, active) { try { await api("/users/" + id, { method: "PATCH", body: JSON.stringify({ active }) }); await loadAll(); render() } catch (e) { alert(e.message) } }
 async function resetUserPassword(id, username) { const next = prompt(`New password for ${username} (8+ chars)`); if (!next) return; try { await api("/users/" + id + "/reset-password", { method: "POST", body: JSON.stringify({ password: next }) }); alert("Password reset successfully."); } catch (e) { alert(e.message) } }
 async function changePassword() { const current = prompt("Current password"); if (!current) return; const next = prompt("New password (8+ chars)"); if (!next) return; try { await api("/auth/change-password", { method: "POST", body: JSON.stringify({ currentPassword: current, newPassword: next }) }); alert("Password changed successfully."); } catch (e) { alert(e.message) } }
-async function logout() { try { await api("/auth/logout", { method: "POST" }) } finally { if (staffRefreshTimer) clearInterval(staffRefreshTimer);if (ownerOrderAlertTimer) {
-  clearInterval(ownerOrderAlertTimer);
+async function logout() {
+  try { await api("/auth/logout", { method: "POST" }) } finally {
+    if (staffRefreshTimer) clearInterval(staffRefreshTimer); if (ownerOrderAlertTimer) {
+      clearInterval(ownerOrderAlertTimer);
+    }
+
+    ownerOrderAlertTimer = null;
+    seenOwnerOrderIds.clear();
+    staffRefreshTimer = null; renderLogin()
+  }
+}
+function openKitchen() { window.open("/kitchen.html", "_blank"); }
+
+function formatOrderDateTime(dateValue) {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Date unavailable";
+  }
+
+  return date.toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true
+  });
 }
 
-ownerOrderAlertTimer = null;
-seenOwnerOrderIds.clear();
- staffRefreshTimer = null; renderLogin() } }
-function openKitchen() { window.open("/kitchen.html", "_blank"); }
-function printReceipt(id){
-  const o=state.orders.find(x=>x.id===id);
-  if(!o)return;
+function printReceipt(id) {
+  const o = state.orders.find(x => x.id === id);
+  if (!o) return;
 
-  const w=window.open("","_blank","width=420,height=700");
+  const w = window.open("", "_blank", "width=420,height=700");
 
-  const rows=o.items.map(i=>`
+  const rows = o.items.map(i => `
     <tr>
       <td>${i.qty} × ${esc(i.name)}</td>
-      <td style="text-align:right">${money(i.price*i.qty)}</td>
+      <td style="text-align:right">${money(i.price * i.qty)}</td>
     </tr>
   `).join("");
 
@@ -531,8 +577,7 @@ function printReceipt(id){
         <div class="order-info">
           <b>Order #${o.id}</b><br>
           Table ${o.table}<br>
-          ${new Date(o.createdAt).toLocaleString()}
-        </div>
+${formatOrderDateTime(o.createdAt)}        </div>
 
         <div class="customer">
           <b>Customer:</b> ${esc(o.customer.name)}<br>
@@ -580,7 +625,7 @@ function printReceipt(id){
   `);
 
   w.document.close();
-}function makeQRs() {
+} function makeQRs() {
   for (let i = 1; i <= 21; i++) {
     const el = $("#qr-" + i);
     const table = state.tables.find(x => Number(x.id) === i);
