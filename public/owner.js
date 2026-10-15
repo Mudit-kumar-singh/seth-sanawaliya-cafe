@@ -355,8 +355,19 @@ function nextActions(o) {
   return '';
 }
 
+
 function formatOrderDateTime(dateValue) {
-  const date = new Date(dateValue);
+  if (!dateValue) return "Date unavailable";
+
+  let value = String(dateValue).trim();
+
+  // SQLite timestamps look like "2026-10-14 18:26:23".
+  // Explicitly mark these as UTC before converting to IST.
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) {
+    value = value.replace(" ", "T") + "Z";
+  }
+
+  const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return "Date unavailable";
@@ -373,6 +384,7 @@ function formatOrderDateTime(dateValue) {
     hour12: true
   });
 }
+
 
 function ordersHTML(arr) {
   if (!arr.length) return '<div class="empty">No orders yet.</div>';
